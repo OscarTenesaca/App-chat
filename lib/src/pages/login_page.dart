@@ -1,5 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:developer';
 
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../helpers/mostrar_alerta.dart';
+import '../services/auth_services.dart';
 import '../widget/boton_azul.dart';
 import '../widget/custom_input.dart';
 import '../widget/labels.dart';
@@ -48,6 +53,7 @@ class __FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    final apiAuthServ = Provider.of<AuthService>(context);
     return Container(
       margin: EdgeInsets.only(top: 40),
       padding: EdgeInsets.symmetric(horizontal: 50),
@@ -67,10 +73,24 @@ class __FormState extends State<_Form> {
           ),
           BotonAzul(
             text: 'Ingrese',
-            onPressed: () {
-              print(emailCtrl.text);
-              print(passCtrl.text);
-            },
+            onPressed: apiAuthServ.getAutenticando
+                ? () => {}
+                : () async {
+                    FocusScope.of(context).unfocus();
+                    final loginOk = await apiAuthServ.customerLogin({
+                      "email": "test1@test.com".trim(),
+                      "password": "12345".trim()
+                    });
+
+                    if (loginOk) {
+                      // TODO: Conectar a nuestro socket server
+                      Navigator.pushReplacementNamed(context, 'routeUser');
+                    } else {
+                      // Mostara alerta
+                      mostrarAlerta(context, 'Login incorrecto',
+                          'Revise sus credenciales nuevamente');
+                    }
+                  },
           )
         ],
       ),

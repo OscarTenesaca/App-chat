@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 import '../models/user.dart';
+import '../services/auth_services.dart';
 
 class UserPage extends StatefulWidget {
   const UserPage({Key? key}) : super(key: key);
@@ -14,18 +16,21 @@ class _UserPageState extends State<UserPage> {
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
 
-  final List<User> usuarios = [
-    User(uid: '1', nombre: 'Oscar', email: 'test1@test.com', online: true),
-    User(uid: '2', nombre: 'maria', email: 'test2@test.com', online: false),
-    User(uid: '3', nombre: 'ana', email: 'test3@test.com', online: true),
+  final List<Usuario> usuarios = [
+    Usuario(uid: '1', nombre: 'Oscar', email: 'test1@test.com', online: true),
+    Usuario(uid: '2', nombre: 'maria', email: 'test2@test.com', online: false),
+    Usuario(uid: '3', nombre: 'ana', email: 'test3@test.com', online: true),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+    final user = authService.usuario;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Mi nombre',
+        title: Text(
+          '${user?.nombre}',
           style: TextStyle(color: Colors.black87),
         ),
         elevation: 1,
@@ -35,7 +40,12 @@ class _UserPageState extends State<UserPage> {
             Icons.exit_to_app,
             color: Colors.black87,
           ),
-          onPressed: () {},
+          onPressed: () {
+            // desconectar socket
+
+            AuthService.deleteToken();
+            Navigator.pushReplacementNamed(context, 'routelogin');
+          },
         ),
         actions: <Widget>[
           Container(
@@ -66,7 +76,7 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  ListTile _usuarioListTitle(User usuario) {
+  ListTile _usuarioListTitle(Usuario usuario) {
     return ListTile(
       title: Text('${usuario.nombre}'),
       leading: CircleAvatar(

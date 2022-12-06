@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../helpers/mostrar_alerta.dart';
+import '../services/auth_services.dart';
 import '../widget/boton_azul.dart';
 import '../widget/custom_input.dart';
 import '../widget/labels.dart';
@@ -49,9 +52,10 @@ class __FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    final apiAuthServ = Provider.of<AuthService>(context);
     return Container(
-      margin: EdgeInsets.only(top: 40),
-      padding: EdgeInsets.symmetric(horizontal: 50),
+      margin: const EdgeInsets.only(top: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 50),
       child: Column(
         children: <Widget>[
           CustomInput(
@@ -73,11 +77,25 @@ class __FormState extends State<_Form> {
             isPassword: true,
           ),
           BotonAzul(
-            text: 'Ingrese',
-            onPressed: () {
-              print(emailCtrl.text);
-              print(passCtrl.text);
-            },
+            text: 'Crear Cuenta',
+            onPressed: apiAuthServ.getAutenticando
+                ? () => {}
+                : () async {
+                    FocusScope.of(context).unfocus();
+                    final registerOk = await apiAuthServ.customerRegister({
+                      "nombre": nameCtrl.text.trim(),
+                      "email": emailCtrl.text.trim(),
+                      "password": passCtrl.text.trim()
+                    });
+
+                    if (registerOk == true) {
+                      // TODO: Conectar a nuestro socket server
+                      Navigator.pushReplacementNamed(context, 'routeUser');
+                    } else {
+                      // Mostara alerta
+                      mostrarAlerta(context, 'Registro incorrecto', registerOk);
+                    }
+                  },
           )
         ],
       ),
