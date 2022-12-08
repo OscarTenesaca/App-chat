@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:chat_app/src/services/socket_services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -54,6 +55,8 @@ class __FormState extends State<_Form> {
   @override
   Widget build(BuildContext context) {
     final apiAuthServ = Provider.of<AuthService>(context);
+    final socketServ = Provider.of<SocketService>(context);
+
     return Container(
       margin: EdgeInsets.only(top: 40),
       padding: EdgeInsets.symmetric(horizontal: 50),
@@ -78,12 +81,13 @@ class __FormState extends State<_Form> {
                 : () async {
                     FocusScope.of(context).unfocus();
                     final loginOk = await apiAuthServ.customerLogin({
-                      "email": "test1@test.com".trim(),
+                      "email": "test4@test.com".trim(),
                       "password": "12345".trim()
                     });
 
                     if (loginOk) {
-                      // TODO: Conectar a nuestro socket server
+                      //  Conectar a nuestro socket server
+                      socketServ.connectIO();
                       Navigator.pushReplacementNamed(context, 'routeUser');
                     } else {
                       // Mostara alerta

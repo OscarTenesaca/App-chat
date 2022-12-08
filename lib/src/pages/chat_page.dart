@@ -1,8 +1,11 @@
-import 'dart:io';
-
+import 'package:chat_app/src/models/mensajes_response.dart';
+import 'package:chat_app/src/services/auth_services.dart';
+import 'package:chat_app/src/services/socket_services.dart';
 import 'package:chat_app/src/widget/chat_message.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../services/chat_services.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({Key? key}) : super(key: key);
@@ -12,13 +15,70 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
+  ChatServices? chatServ;
+  SocketService? socketService;
+  AuthService? authService;
+
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
   bool _isWriting = false;
 
   List<ChatMessage> _messages = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    chatServ = Provider.of<ChatServices>(context, listen: false);
+    socketService = Provider.of<SocketService>(context, listen: false);
+    authService = Provider.of<AuthService>(context, listen: false);
+
+    socketService!.getSocket.on('mensaje-personal', _escucharMensaje);
+
+    _cargarHistorial(chatServ!.usuarioPara!.uid);
+  }
+
+  void _escucharMensaje(dynamic payload) {
+    print(payload['mensaje']);
+    ChatMessage message = ChatMessage(
+      texto: payload['mensaje'],
+      uid: payload['de'],
+      animationController: AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: 300),
+      ),
+    );
+    setState(() {
+      _messages.insert(0, message);
+    });
+    message.animationController.forward();
+  }
+
+  void _cargarHistorial(String usuarioId) async {
+    List<Mensaje>? chat = await chatServ!.getChat(usuarioId);
+
+/* 
+*nota
+Crear un arreglo tipo ChatMessage
+
+*/
+
+    final history = chat!.map((m) => ChatMessage(
+          texto: '${m.mensaje}',
+          uid: '${m.de}',
+          animationController: AnimationController(
+              vsync: this, duration: const Duration(milliseconds: 0))
+            ..forward(),
+        ));
+
+    setState(() {
+      _messages.insertAll(0, history);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final usuarioPara = chatServ!.usuarioPara;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -27,10 +87,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             CircleAvatar(
               backgroundColor: Colors.blue[100],
               maxRadius: 14,
-              child: const Text('OT', style: TextStyle(fontSize: 12)),
+              child: Text(usuarioPara!.nombre.substring(0, 2),
+                  style: TextStyle(fontSize: 12)),
             ),
             const SizedBox(height: 3),
-            const Text('Oscar Tenesaca',
+            Text(usuarioPara.nombre,
                 style: TextStyle(color: Colors.black87, fontSize: 12)),
           ],
         ),
@@ -115,7 +176,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _focusNode.requestFocus();
 
     final newMessage = ChatMessage(
-      uid: '123',
+      uid: authService!.usuario!.uid, //user logeado
       texto: texto,
       animationController: AnimationController(
           vsync: this, duration: Duration(milliseconds: 200)),
@@ -126,6 +187,12 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     setState(() {
       _isWriting = false;
     });
+
+    socketService?.getSocket.emit('mensaje-personal', {
+      'de': authService?.usuario!.uid,
+      'para': chatServ!.usuarioPara!.uid,
+      'mensaje': texto,
+    });
   }
 
   @override
@@ -134,6 +201,9 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     for (ChatMessage message in _messages) {
       message.animationController.dispose();
     }
+// desconectar del canal
+    socketService!.getSocket.off('mensaje-personal');
+
     super.dispose();
   }
 }

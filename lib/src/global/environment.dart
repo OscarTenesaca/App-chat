@@ -6,5 +6,5 @@ class Environment {
   static String url =
       Platform.isAndroid ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
 
-  // static String url = 'http://10.0.2.2:3000';
+  // 'http://10.0.2.2:3000';
 }

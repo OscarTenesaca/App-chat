@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../helpers/mostrar_alerta.dart';
 import '../services/auth_services.dart';
+import '../services/socket_services.dart';
 import '../widget/boton_azul.dart';
 import '../widget/custom_input.dart';
 import '../widget/labels.dart';
@@ -53,6 +54,8 @@ class __FormState extends State<_Form> {
   @override
   Widget build(BuildContext context) {
     final apiAuthServ = Provider.of<AuthService>(context);
+    final socketServ = Provider.of<SocketService>(context);
+
     return Container(
       margin: const EdgeInsets.only(top: 40),
       padding: const EdgeInsets.symmetric(horizontal: 50),
@@ -90,6 +93,7 @@ class __FormState extends State<_Form> {
 
                     if (registerOk == true) {
                       // TODO: Conectar a nuestro socket server
+                      socketServ.connectIO();
                       Navigator.pushReplacementNamed(context, 'routeUser');
                     } else {
                       // Mostara alerta
